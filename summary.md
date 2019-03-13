@@ -60,9 +60,9 @@
 
 7. linux系统查看内存命令
     - cat /proc/meminfo 这个虚拟文件就行，里面显示了各种内存信息。
-    [cat /pro/meminfo](http://ww4.sinaimg.cn/large/005xfSxkly1g11frvfwanj30ko0dxwj9.jpg)
+    [!cat /pro/meminfo](http://ww4.sinaimg.cn/large/005xfSxkly1g11frvfwanj30ko0dxwj9.jpg)
     - free 命令将/proc/meminfo里的信息概述出来。
-    [free](http://ww1.sinaimg.cn/large/005xfSxkly1g11ftm1t5oj30kq03cmy4.jpg)
+    [!free](http://ww1.sinaimg.cn/large/005xfSxkly1g11ftm1t5oj30kq03cmy4.jpg)
 
 8. 用gdb查看堆栈信息
     - **有待研究**
