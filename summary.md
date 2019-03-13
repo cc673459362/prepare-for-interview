@@ -65,7 +65,15 @@
     ![free](http://ww1.sinaimg.cn/large/005xfSxkly1g11ftm1t5oj30kq03cmy4.jpg)
 
 8. 用gdb查看堆栈信息
-    - **有待研究**
+    - 1. 首先，在编译的时候加上 -g，将调试信息加入进去。
+    - 2. 然后用 gdb （程序名）开始调试。用list可以让gdb打出代码来看。
+    - 3. 调试首先加入几个断点：用 break （行数/函数名等）加入断点，用info break命令可以查看当前断点。同样用 clear （。。）就可以删除断点。
+    - 4. run  将程序运行起来，程序会运行到第一个断点把控制权交还给用户。
+    - 5. next  就是一步步调试程序，和stepi不同的是，step当遇到程序调用的时候，会进入该调用程序，而next不会。
+    - 6. 用info frame可以查看当前栈帧信息。 info registers查看当前寄存器信息。使用 backtrace 或者 bt 可以打印出当前栈的信息。
+    - 7. print （变量名或者表达式）可以打印出当前该变量或表达式的内容。
+    - 8. kill  和run相反，停止程序
+    - 9. quit 推出gdb调试。
 
 9. mysql有哪些引擎
     - 有MyISAM、Innodb、MEMORY等。
