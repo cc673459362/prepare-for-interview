@@ -153,3 +153,53 @@
     - 那么如何确定j应该回溯到哪呢？这个问题前面就说了，根据子串自己其实就可以确定，跟母串无关。如何确定？
     - 假设子串是abaabcac，那么j是1，2，3，4，5，6，7，8.假设现在在j=6的地方失去了匹配，那么也就是说abaab这俩是已经匹配的，那么此时j应该怎么回溯呢？我们发现abaab的前缀ab和后缀ab相等，那么我们把这个子串往后移，可以把前面的ab放到后面的ab处就行了，这样前两个ab就已经匹配了，直接从j=3的a开始再次和母串匹配就行了。所以j=6的next[j]=3。从中我们发现，要去计算j的next[j]的值，只需要去观察在j之前的子串的前缀和后缀相等的长度（假设为k），有多长的前后缀相等（k），那么这个长度就不用再次匹配了，直接从k+1的那个位置开始再次开启匹配过程即可。所以next[j]=k+1；（k是指j位置之前的串的前后缀相等长度。）
     - 知道了next[j]之后，KMP就很简单了，和前面暴力匹配一样，相等就i++，j++。只不过不想等的时候，i不用动，j=next[j]（-1）就行啦！
+    ```C++
+    //i,j表示的意思就是下标。
+    string src = "abcccwdoghrlkwkndams,hr";
+    string pattern = "abaabcac";
+    int m = pattern.size();
+    vector<int> next(m, 0);
+    int ispattern(string src, string pattern) {
+	    int n = src.size();
+	    int m = pattern.size();
+	    if (m > n || m == 0) return -1;
+	    int i = 0;
+	    int j =0;
+	    while (i < n&&j < m) {
+		    if (j == -1 || src[i] == pattern[j]) {
+			    i++;
+			    j++;
+		    }
+		    else {
+			    j = ::next[j];
+		    }
+	    }
+	    if (j>=m) return i - m ; 
+	    else
+		    return -1;
+    }
+    void getnext(string pattern, vector<int>& next) {
+	    if (pattern.size() == 0) return;
+	    next[0] = -1;
+	    for (int i = 1; i<pattern.size(); i++) {
+		    int k = i - 1 -1;     
+		    int l = 1;                
+		    while (pattern.substr(0, k+1/*  从0~k的子串的长度是k+1*/) != pattern.substr(l, k+1) && k+1>0) {
+			    k--;
+			    l++;
+		    }
+		    next[i] = k + 1;
+	    }
+    }
+
+    int main() {
+	    getnext(pattern, ::next);
+	    int a = ispattern(src, pattern);
+	    for (int i = 0; i < m ; i++) {
+		    cout << ::next[i] << " ";
+	    }
+	    cout << endl;
+	    cout << a;
+    }
+    ```
+    
