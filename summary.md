@@ -79,7 +79,7 @@
     - 有MyISAM、Innodb、MEMORY等。
     - MyISAM支持表锁，INSERT和SELECT比较快，但是并发性没有Innodb好。
     - Innodb支持行锁，并发性更好。
-    - **行锁的实现原理（有待研究）**
+    - Mysql的innodb行锁是通过给索引上的索引项加锁实现的，和Oracle不同的是，Oracle是通过给相应的数据行加锁实现的。Innodb这种行锁意味着如果不是通过索引去检索数据，是不能使用行锁的，会使用表锁。
 
 
 10. TCP、UDP区别  
