@@ -79,8 +79,8 @@
     - 有MyISAM、Innodb、MEMORY等。
     - MyISAM支持表锁，INSERT和SELECT比较快，但是并发性没有Innodb好。
     - Innodb支持行锁，并发性更好。
-    - Mysql的innodb行锁是通过给索引上的索引项加锁实现的，和Oracle不同的是，Oracle是通过给相应的数据行加锁实现的。Innodb这种行锁意味着如果不是通过索引去检索数据，是不能使用行锁的，会使用表锁。
-
+    - Mysql的innodb行锁是通过给索引上的索引项加锁（或者对索引项之间的间隙加锁）实现的，和Oracle不同的是，Oracle是通过给相应的数据行加锁实现的。Innodb这种行锁意味着如果不是通过索引去检索数据，是不能使用行锁的，会使用表锁。
+    - 
 
 10. TCP、UDP区别  
     
@@ -203,3 +203,154 @@
     }
     ```
     
+
+## 360ym 
+   1. 写一个二分查找。
+   ```C++
+   //递归实现
+   int binarysearch(int* a,int left,int right,int key){
+       int mid=(left+right)/2;
+       if(left>=right){
+           return -1;
+       }
+       if(a[mid]>key){
+           binarysearch(a,left,mid-1,key);
+       }
+       else if(a[mid]<key){
+           binarysearch(mid+1,right,key);
+       }
+       else if(a[mid]==key){
+           return mid;
+       }
+   }
+
+   //非递归实现
+   int binarysearch(int* a,int left,int right,int key){
+       while(left<right){
+           int mid=(left+right)/2;
+           if(a[mid]>key){
+               right=mid-1;
+           }
+           else if(a[mid]<key){
+               left=mid+1;
+           }
+           else{
+               return mid;
+           }
+       }
+       return -1;
+   }
+
+
+   ```
+2. 有一个数组，找出其中符合下列要求的所有元素：该元素左边的元素都比他小，该元素右边的元素都比他大。
+   - 这个数的特点就是他是他左边的最大值，右边数组的最小值。那么我们可以先从右往左把最小值记录下来。然后再从左往右判断这个当前元素的最大值，如果和当前元素的右边最小值相等，则该元素符合要求。
+  ```C++
+  vector<int> getindex(vector<int> a){
+      int num=a.size();
+      vector<int> res;
+      vector<int> minm;
+      int least=INT_MAX;
+      for(int i=num-1;i>=0;i--){
+          least=min(a[i],least);
+          minm.push_back(least);
+      }
+      int largest=INT_MIN;
+      for(int i=0;i<num;i++){
+          largest=max(largest,a[i]);
+          if(lagest==least[i]){
+              res.push_back(i);
+          }
+      }
+      return res;
+  }  
+  ```
+3. Dijkstra(迪杰斯特拉)算法。
+   - 算法思想：设G=(V,E)是一个**带权有向图**，把图中顶点集合V分成两组，第一组为已求出最短路径的顶点集合（用S表示，初始时S中只有一个源点，以后每求得一条最短路径 , 就将加入到集合S中，直到全部顶点都加入到S中，算法就结束了），第二组为其余未确定最短路径的顶点集合（用U表示），按最短路径长度的递增次序依次把第二组的顶点加入S中。在加入的过程中，总保持从源点v到S中各顶点的最短路径长度不大于从源点v到U中任何顶点的最短路径长度。此外，每个顶点对应一个距离，S中的顶点的距离就是从v到此顶点的最短路径长度，U中的顶点的距离，是从v到此顶点只包括S中的顶点为中间顶点的当前最短路径长度。
+  ![图]()
+
+4. 求两个有序数组的并集（有序数组内有重复元素）不能用unique。
+   ```C++
+   vector<int> getunionset(vector<int> a,vector<int> b){
+       int n=a.size();
+       int m=b.size();
+       int i=0;
+       int j=0;
+       vector<int> res;
+       while(i<n&&j<m){
+           if(a[i]==b[j]){
+               if (res.size() == 0) {
+				    res.push_back(a[i]);
+				    i++;
+				    j++;
+			    }
+               else if(res.back()!=a[i]){
+                   res.push_back(a[i]);
+                   i++;
+                   j++;
+               }
+               else{
+                   i++;j++;
+               }
+           }
+           else if(a[i]<b[j]){
+                if (res.size() == 0) {
+				    res.push_back(a[i]);
+				    i++;
+				
+			    }
+                else if(res.back()!=a[i]){
+                   res.push_back(a[i]);
+                   i++;
+               }
+               else{
+                   i++;
+               }
+           }
+           else{
+                if (res.size() == 0) {
+				    res.push_back(b[j]);
+				    j++;
+				
+			    }
+               else if(res.back()!=b[j]){
+                   res.push_back(b[j]);
+                   j++;
+               }
+               else{
+                   j++;
+               }
+           }
+       }
+       if(i==n){
+           while(j<m){
+               if(res.back()!=b[j]){
+                   res.push_back(b[j]);
+                   j++;
+               }
+               else{
+                   j++;
+               }
+           }
+       }
+       else{
+           while(i<n){
+               if(res.back()!=a[i]){
+                   res.push_back(a[i]);
+                   i++;
+               }
+               else{
+                   i++;
+               }
+           }
+       }
+       return res;
+   }
+   ```
+
+5. 在Linux系统下的内存泄漏检查方法。
+   - 用Valgrind
+   - 最简单的就是 valgrind [proname]。但是记得程序编译的时候加上-g 和-O0.
+6. 调试运行中的程序。
+    - 可以先用ps -a查看进程PID。
+    - 然后用 gdb attach [PID].就可以调试这个程序了。
