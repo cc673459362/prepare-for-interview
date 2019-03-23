@@ -354,3 +354,63 @@
 6. 调试运行中的程序。
     - 可以先用ps -a查看进程PID。
     - 然后用 gdb attach [PID].就可以调试这个程序了。
+
+
+
+7. 有一个单链表1->2->3->...->n-1->n;把他修改成1->n->2->n-1->3->n-2...-.
+   ```C++
+   //首先将该链表一分为二，然后将后半部分翻转，然后合并
+   ListNode* gethallist(ListNode* head){
+       ListNode* fast=head;
+       ListNode* slow=head;
+       while(fast!=NULLfast->next!=NULL){
+           fast=fast->next->next;
+           slow=slow->next;
+       }
+       ListNode* sechead=slow->next;
+       slow->next=NULL;
+       sechead=reverseList(sechead);
+       ListNode* res=merge(head,sechead)
+       return res;
+   }
+   ListNode* reverseList(ListNode* head){
+       if(head==NULL){
+           return NULL;
+       }
+       ListNode* temp=New ListNode();
+       temp->next=head;
+       ListNode* pre=head;
+       ListNode* cur=pre->next;
+       while(cur){
+           pre->next=cur->next;
+           cur->next=temp->next;
+           temp->next=cur;
+           cur=pre->next;
+       }
+       return temp->next;
+   }
+    ListNode* merge(ListNode* head,ListNode* sechead) {
+	    if (sechead == NULL) return head;
+	    if (head == NULL) return sechead;
+	    ListNode* res = head;
+	    ListNode * p1 = head;
+	    ListNode *p2 = sechead;
+	    while (p1->next&&p2->next) {
+		    p1 = p1->next;
+		    p2 = p2->next;
+		    head->next = sechead;
+		    sechead->next = p1;
+		    head = p1;
+		    sechead = p2;
+	    }
+	    if (p1->next) {
+		    p1 = p1->next;
+		    head->next = sechead;
+		    sechead->next = p1;
+	    }
+	    if (p2->next) {
+		    p2 = p2->next;
+		    head->next = sechead;
+	    }
+		    return res;
+    }
