@@ -414,3 +414,8 @@
 	    }
 		    return res;
     }
+8. 如何确定远端服务器的端口是否可用。
+ - 用telnet功能。telnet是TCP\IP协议族的一员，通过telnet功能，本机可以登录远端服务器，对远端服务器进行远程控制。
+ - telnet和ping的区别再去，telnet要求端口，是基于TCP的，而ping只要求IP地址，使用的是网络层的ICMP协议。
+
+  

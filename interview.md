@@ -129,3 +129,106 @@
    - 非对称加密算法：RSA、DSA/DSS
    - 对称加密算法：AES、RC4、3DES
    - hash算法：MD5,SHA1,SHA256
+
+9. 前序遍历
+    ```C++
+    //递归版本
+    void preorder(Tree* root){
+        if(root!=NULL){
+            do something to root;
+            preorder(root->left);
+            preorder(root->right);
+        }
+    }
+    //非递归版本
+    void preorder2(Tree* root){
+        stack<Tree*> s;
+        Tree* pnode=root;
+        while(pnode||!s.empty()){
+            if(pnode){
+                do something to pnode;
+                s.push(pnode);
+                pnode=pnode->left;
+            }
+            else{
+                pnode=s.pop();
+                pnode=pnode->right;
+            }
+        }
+    }
+
+    ```
+10. 中序遍历
+    ```C++
+    //递归版本
+    void inorder(Tree* root){
+        if(root!=NULL){
+            inorder(root->left);
+            do something to root;
+            inorder(root->right);
+        }
+    }
+
+    //非递归版本
+    void inorder(Tree* root){
+        stack<Tree*> s;
+        Tree* pnode=root;
+        while(pnode||!s.empty()){
+            if(pnode){
+                s.push(pnode);
+                pnode=pnode->left;
+            }else{
+                pnode=s.pop();
+                do something to pnode;
+                pnode=pnode->right;
+            }
+        }
+    }
+
+11. 后序遍历
+    ```C++
+    //递归版本
+    void reorder(Tree* root){
+        if(root!=NULL){
+            reorder(root->left);
+            reorder(root->right);
+            do something to root;
+        }
+    }
+
+    //非递归版本
+    void reorder(Tree* root){
+        stack<Tree*> s;
+        Tree* prenode;
+        prenode=NULL;
+        s.push(root);
+        Tree* cur;
+        while(!s.empty()){
+            cur=s.top();
+            if((cur->left==NULL&&cur->right==NULL)||(prenode!=NULL&&(prenode==cur->left||prenode==cur->right))){
+                cout<<cur->data;
+                s.pop();
+                prenode=cur;
+            }
+            else{
+                if(cur->right){
+                    s.push(cur->right);
+                }
+                if(cur->left){
+                    s.push(cur->left);
+                } 
+
+            }
+        }
+    }
+
+12. 死锁的产生条件的解决措施
+    - 四大条件：1.互斥性：每个资源只允许一个进程占有，占有后不能被其他进程获取。  
+               2.不可抢占：当资源未被释放时，其他进程不能抢占该资源。
+               3.占有且等待：一个进程占有了某资源，但需求另一个资源，另一个资源必须等待其他进程释放。
+               4.循环等待：形成一种进程链，使得每个进程都都占有下一个进程所需要的至少一种资源。
+    - 解决方案：
+    1. 预防死锁：1.破坏“不可抢占”：当一个进程想要获取的资源无法得到满足时，就释放自己拥有的资源，待之后需要时重新申请。2.破坏“占有且等待”：进程开始时就分配所有资源。3.破坏“循环等待”：给资源编号，每个进程占有资源i，那么该进程只能申请比i大的资源，这样就不会循环了。
+    2. 避免死锁：只允许不会产生死锁的进程去申请资源。银行家算法。还可以按照一定顺序加锁，给锁加超时时长，
+    3. 死锁检测：通过对现有的锁和资源请求进行记录，如果某次请求资源失败时，通过去检查这个记录去判断是否发生了死锁，如果发生了就跳到死锁处理机制去。
+    4. 死锁处理：资源剥夺法（挂起某些死锁进程，将资源分配给其他进程，但应防止该挂起进程长期获取不到资源，长期处于饥饿状态。）、进程撤销法（杀死部分或者全部死锁进程）、进程回退法（让部分死锁进程回退到可以避免死锁的地步）
