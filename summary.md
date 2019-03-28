@@ -446,4 +446,5 @@
     - 在SQL语句前加explain，
 20. 如何查看一张表里的索引
     - show index from table_name;
-21. 
+21. Linux中grep打印出不包含的。
+    - 用 grep -v。
