@@ -448,3 +448,7 @@
     - show index from table_name;
 21. Linux中grep打印出不包含的。
     - 用 grep -v。
+
+
+
+22. 字符串数组的展开：例如:e3[2[abc]gh]=eabcabcghabcabcghabcabcgh。

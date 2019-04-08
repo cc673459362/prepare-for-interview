@@ -232,3 +232,55 @@
     2. 避免死锁：只允许不会产生死锁的进程去申请资源。银行家算法。还可以按照一定顺序加锁，给锁加超时时长，
     3. 死锁检测：通过对现有的锁和资源请求进行记录，如果某次请求资源失败时，通过去检查这个记录去判断是否发生了死锁，如果发生了就跳到死锁处理机制去。
     4. 死锁处理：资源剥夺法（挂起某些死锁进程，将资源分配给其他进程，但应防止该挂起进程长期获取不到资源，长期处于饥饿状态。）、进程撤销法（杀死部分或者全部死锁进程）、进程回退法（让部分死锁进程回退到可以避免死锁的地步）
+
+#include<iostream>
+#include<string>
+#include<queue>
+#include<sstream>
+using namespace std;
+
+int main() {
+	queue<int> q1;
+	int level = 0;
+	vector<int> input;
+	string ss;
+	getline(cin, ss);
+	int k = 0;
+	int m = ss.size();
+
+	if (m>2&&ss[0] == 'N'&&ss[1] == 'o') {
+		cout << "True";
+		return 0;
+	}
+	while (k<m) {
+		int start = k;
+		while (k<m&&ss[k] != ',') {
+			k++;
+		}
+		input.push_back(stoi(ss.substr(start, k - start)));
+		k++;
+	}
+	int i = 0;
+	int n = input.size();
+	if (n == 0) { cout << "True"; return 0; }
+	q1.push(input[i]);
+	while (i<n-1) {
+		if (input[++i] <= q1.front()) {
+			q1.push(input[i]);
+		}
+		else {
+			cout << "False";
+			return 0;
+		}
+		if (input[++i] >= q1.front()) {
+			q1.push(input[i]);
+		}
+		else {
+			cout << "False";
+			return 0;
+		}
+		q1.pop();
+	}
+	cout << "True";
+	return 0;
+}
