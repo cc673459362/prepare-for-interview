@@ -56,7 +56,7 @@
 11. 第二点则是节点的共享，当production中由一些conditions是相同的，那么这两个production就可以共享这些节点。例如上图中的alpha memoryC3被production P1和P3共享。再例如在beta网络中，如果由一些production的部分condition相同，则可以共用一些beta节点，而不必重新复制一个重复的节点。由于这些节点共享，所以beta网络看上去像是一颗树。
 12. Rete模型系统分为四个切入点：add-wme，remove-wme，add-production,remove-production。
 13. add-wme。当一个wme被加入到working memory中，那么这个alpha网络将对他进行必要的常量测试然后将他存储与合适的alpha memories中。有几种方法可以去找到合适的alpha memories。
-    - Dataflow Network
+    - Dataflow Network  
     - ![dataflow](http://ww1.sinaimg.cn/mw690/005xfSxkly1g25n6mn5jhj30zp0pm0zv.jpg)
     - 如上图，这是一个简单的规则系统网络图，含有C1-C10 10条conditions。对于每个condition，我们做出k个节点做常量测试，用这k个节点作为路径使得WME在路径上进行测试流动。这k个节点的建立过程中，如果本condition的某个节点和另外一个condition的某个节点常量测试一样，则共享该节点。最后在节点末尾增加一个alpha memory。作为wme完成常量测试的输出。
     - 从上图中可以看到，我们只关注了它的constants，而没有关注variable name。因此，C2和C10共享了节点和alpha memory即便他们有不同的variable names。而且condition也有可能不包含任何节点，直接作为top节点的子节点，犹如C9。
