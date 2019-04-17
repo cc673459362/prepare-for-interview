@@ -47,7 +47,16 @@
 7. Rete使用数据流网络去代表规则的条件。网络分为两个部分。alpha网络用来测试WME。它将符合条件的WME存储到AM(alpha memories)中。
 ![RETE网络图](http://ww1.sinaimg.cn/mw690/005xfSxkly1g1yqmo0c6bj30yq0l1aj7.jpg)
 
-从上图中可以看到。beta网络是由join节点和beta memories构成的。（可能还会有其他一些节点，后面讲。）Join节点的功能是测试两个条件的一致性，也就是说，它的左右输入都是已经符合某个或者某类条件了，那么这个join节点的功能就是将左右已经符合某类条件的事实库再次测试其两边都符合的事实。将它们存到自己的beta memories中。所以beta memories中存储的是符合该规则的部分条件的WMEs，只有走到根节点才是符合该规则所有条件的WMEs。
+  从上图中可以看到。beta网络是由join节点和beta memories构成的。（可能还会有其他一些节点，后面讲。）Join节点的功能是测试两个条件的一致性，也就是说，它的左右输入都是已经符合某个或者某类条件了，那么这个join节点的功能就是将左右已经符合某类条件的事实库再次测试其两边都符合的事实。将它们存到自己的beta memories中。所以beta memories中存储的是符合该规则的部分条件的WMEs，只有走到根节点才是符合该规则所有条件的WMEs。
 
 8. 严格来说，大部分Rete网络的alpha网络不仅仅测试常量比如在单个条件中出现 \<x\> ^ self \<x>.但是这里，论文里很少出现这种条件，且本篇论文的大部分条件都是“相等”判断，连“大于”、“小于”等判断都很少。总之，在基本情况下，alpha网络表现为测试单个WME，而beta啊网络表现为测试两个及两个以上的WMEs。
-9. 
+9. 上述过程也可以用数据库去类比。Working Memory作为关系型数据库的表，而Production则是作为Query。不同的条件匹配就可以看作是对数据库内容的select，将select得到的结果存储与alpha memory中。最终符合规则P的working memory 将会是把前面分别select得到的结果通过join select联合起来。join operation由Beta网络的Join节点完成。每个beta memory里存储了每次join操作得到的结果。每当working memory发生改变，我们便通过alpha网络传送这些改变，并更新alpha memory。这些更新将会被传播到相关的join节点。如果join节点中有实例被改变，那么我们便更新这个beta memory，并将其改变往下传播，知道到达最终的执行节点。
+   - 例如，有n个condition c(n)在系统内，那么我们就将他们各自的select结果r(cn)存储在相应的alpha memory中，现在如果规则P由C1...C2...Ck构成。那么如果P被匹配，则过程就是r(c1)Xr(c2)X...xr(ck).其中的X代表着JOIN操作。
+10. 能够让RETE算法比普通匹配算法块的原因在于Rete算法可以保存状态。每次改变WM，那么在alpha和beta网络中得到的匹配结果都会保存，那么下次改变WM的时候，就不用所有WMEs都进行重新计算，那么就减少了很多重复计算。（Rete算法的状态保存特性使得它在那种小规模变化的WMEs中表现良好，但并不适用与大规模WMEs的变化。）
+11. 第二点则是节点的共享，当production中由一些conditions是相同的，那么这两个production就可以共享这些节点。例如上图中的alpha memoryC3被production P1和P3共享。再例如在beta网络中，如果由一些production的部分condition相同，则可以共用一些beta节点，而不必重新复制一个重复的节点。由于这些节点共享，所以beta网络看上去像是一颗树。
+12. Rete模型系统分为四个切入点：add-wme，remove-wme，add-production,remove-production。
+13. add-wme。当一个wme被加入到working memory中，那么这个alpha网络将对他进行必要的常量测试然后将他存储与合适的alpha memories中。有几种方法可以去找到合适的alpha memories。
+    - Dataflow Network
+    - ![dataflow](http://ww1.sinaimg.cn/mw690/005xfSxkly1g25n6mn5jhj30zp0pm0zv.jpg)
+    - 如上图，这是一个简单的规则系统网络图，含有C1-C10 10条conditions。对于每个condition，我们做出k个节点做常量测试，用这k个节点作为路径使得WME在路径上进行测试流动。这k个节点的建立过程中，如果本condition的某个节点和另外一个condition的某个节点常量测试一样，则共享该节点。最后在节点末尾增加一个alpha memory。作为wme完成常量测试的输出。
+    - 从上图中可以看到，我们只关注了它的constants，而没有关注variable name。因此，C2和C10共享了节点和alpha memory即便他们有不同的variable names。而且condition也有可能不包含任何节点，直接作为top节点的子节点，犹如C9。
