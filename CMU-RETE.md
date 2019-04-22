@@ -60,3 +60,85 @@
     ![123](http://ww1.sinaimg.cn/mw690/005xfSxkly1g25nu6a2mlj30zp0pm0zv.jpg)
     - 如上图，这是一个简单的规则系统网络图，含有C1-C10 10条conditions。对于每个condition，我们做出k个节点做常量测试，用这k个节点作为路径使得WME在路径上进行测试流动。这k个节点的建立过程中，如果本condition的某个节点和另外一个condition的某个节点常量测试一样，则共享该节点。最后在节点末尾增加一个alpha memory。作为wme完成常量测试的输出。
     - 从上图中可以看到，我们只关注了它的constants，而没有关注variable name。因此，C2和C10共享了节点和alpha memory即便他们有不同的variable names。而且condition也有可能不包含任何节点，直接作为top节点的子节点，犹如C9。
+14. 我们可以把上述节点用数据结构的形式表示：
+    ```
+    structure constant-test-node
+      field-to-test:"identifier","attribute","value",or"no-test"
+      thing-the-field-must-equal:SYMBOL
+      output-memory:alpha-memory or NULL
+      children: LIST of constant-test-node
+    end
+    ```
+    no-test是用在top节点的。当一个WME被加入到working memory，我们将把它放入到dataflow的top节点中。
+    ```
+    procedure add-wme(w:WME){dataflow version}
+      constant-test-node-activation(the-top-node-of-the-alpha-network,w)
+    end
+    ```
+    该add-wme的procedure将调用constant-test-node-activation这个递归的procedure，递归完成这个WME在alpha网络中的传播。
+    ```
+    procedure constant-test-node-activation(node: constant-test-node;w:WME)
+      if node.field-to-test≠'no-test' then
+        v=w.[field-to-test]
+        if v≠node.thing-the-field-must-equal then
+          return {failed the test, so don't propagate any further}
+      if node.output-memory ≠ NULL then
+        alpha-memory-activation(node.output-memory,w)
+      for each c in node.children do constant-test-node-activation (c,w)
+    end
+    ```
+    通过上面这个递归调用，这个WME要么被中途抛弃，要么被放入到合适的alpha memory中了。但要注意上面的伪代码只示例的=和≠这种判断方式，一般的condition应该包含＞、＜、≥、≤等各种不等关系的判断。这样也许在 node的struct中需要再添加一项判断类型。并且修改之后的constant-test-node-activation这个procedure了。(但原理是一样的。)
+
+  15. Dataflow Network with Hashing
+      - 从上面的网络图中，我们可以看到当节点符合attr==color?的时候，它将会有5个子节点，且这5个子节点是互斥的。随着系统的不断学习和增大，那么这些节点的数量将会越来越多，那么匹配的速率就会越来越慢。（从上面的伪代码可以看到，对于子节点的activation是采用for循环去遍历做的。）
+      - 一种显而易见的改进方式就是将这些大扇出的节点用一个特殊的节点代替，这个节点存储有一张hash表，它可以快速决定应该执行那个子节点。所以上图中的5个color的子节点可以不用遍历，直接在hash表中查找这个WME的“value”值，然后根据查找到的内容执行接下去的传播。事实上，这些子节点完全可以省略了，因为这个hash节点已经可以做到完全一样的效果。如下图优化所示。
+  ![hash](http://ww1.sinaimg.cn/mw690/005xfSxkly1g25pgz5f4tj31330qr7ak.jpg)
+      - 这张图中还是只包含了“相等”这种判断模式。从这张图，我们还可以观察得到，由于我们已经假设condition都有三元组构成（v1 ^v2 v3），那么，任何WME都最多只有8个alpha memory可以进入。如果一个WME w=（v1 ^v2 v3）进入了alpha memory a，那么a肯定得拥有下列8种形式之一：
+      ```
+      (* ^* *)               (v1 ^* *)
+      (* ^v2 *)              (* ^* v3)
+      (v1 ^v2 *)             (v1 ^* v3)
+      (* ^v2 v3)             (v1 ^v2 v3)
+      ```
+      现在alpha memory只有8个，也就是说当一个WME：m进入的时候，只需要在这8个中找应该进入哪个memory就行了。（甚至更少，因为可能不存在符合上述8种之一的条件。）根据上述观察，我们可以无论如何，把alpha网络的top节点之后，跟8个hash节点，分别对应上述情况，然后当一个wme进来之后，在这8个hash节点里查找是否存在这个wme匹配的条件，如果存在，则加入到响应的memory中。否则，查找另一个hash节点，直到所有都查找完。
+      ```
+      procedure add-wme(w:WME){exhausive hash table version}
+        let v1,v2,v3 be the symbls in the three fields of w
+        alpha-mem = lookup-in-hash-table(v1,v2,v3)
+        if alpha-mem ≠ "not-found" then alpha-memory-activation (alpha-mem,w)
+        alpha-mem = lookup-in-hash-table(v1,v2,*)
+        if alpha-mem ≠ "not-found" then alpha-memory-activation (alpha-mem,w)
+        alpha-mem = lookup-in-hash-table(v1,*,v3)
+        if alpha-mem ≠ "not-found" then alpha-memory-activation (alpha-mem,w)
+        alpha-mem = lookup-in-hash-table(*,v2,v3)
+        if alpha-mem ≠ "not-found" then alpha-memory-activation (alpha-mem,w)
+        .
+        .
+        .
+        alpha-mem = lookup-in-hash-table(*,*,*)
+        if alpha-mem ≠ "not-found" then alpha-memory-activation (alpha-mem,w)
+      end
+      ```
+      上述算法基于两个假设：1）WMEs是三元组2）常量测试条件都是相等。其中第一个假设可以被放宽为r元组。当WME是r元组的时候，那么我们可以使用2的r次方个hash表查找。当然了，r不宜过大。对于第二个假设，我们可以有两种方法去消除：
+        - 第一种方法，前面和上面相等测试一样，做出8个hash表查找，但是找到之后，WME并不直接进入alpha memory而是再经过像上面曾经用过的数据流网络那样，把不同的“不等式”测试条件分开，进入不同的alpha memory。所以这种解决方法是将alpha net分为两层，上面一层还是hash查找，后面一层是数据流流动。
+        - 第二种方法则是将不等判断交给beta网络。其实beta网络也可以做一些常量判断，而且并不会增加很大的beta网络的负担。  
+  
+      总体来说，alpha网络的效率都是很高的，对于每次WM的变化，都是常数级的复杂度。RETE算法的主要耗费都是在beta网络。  
+  16.  Memory Node 实现
+         - 回忆一下alpha memory里存储的是WMEs的集合。而beta memory存的是tokens的集合。token指的是WME序列。比如既满足C1又满足C2的事实序列（W1&W2,从C1 AM取出一个WME W1，从C2 AM取出一个WME W2，拼成一个token）。  
+        根据下面两个标准，有2种实现memory node的方式：
+            - 这个（WME或者token的）集合是如何构建的？
+            - token-WME序列是如何指代的？
+        - 还是使用上面讲过的production例子：
+          ```
+          find-stack-of-two-blocks-to-the-left-of-a-red-block
+            (<x> ^on <y>)
+            (<y> ^left-of <z>)
+            (<z> *color red)
+            -->
+            RHS
+          ```
+          ![betanode](http://ww1.sinaimg.cn/mw690/005xfSxkly1g2b8o426m5j30et0j1wiy.jpg)  
+        - 假设有一个新的WME(B7 ^color red)被加入到working memory中，那么它最终会进入C3的alpha memory中，那么从图中可以看到最下面的beta节点将会被右激活。那么这个被右激活的节点将会检查左边的token中的内容是否有匹配将\<z>绑定到了B7的token。在没有索引的情况下，这种查找将会遍历所有内容。当然了这个过程可以通过添加索引加速（比如通过\<z>绑定的内容作为索引选项）。类似的，当一个新的token被加入到beta memory中，那么下个join 节点就会被左激活然后将会查找它的alphamemory中是否有匹配的项。同样的这个查找过程可以使用索引加速。
+        - 一般来说，最好的索引方式就是hash表，而且已有论文证明RETE目前来说比其他手段比如二叉排序树等效果要好。但是，使用hash表索引有一个两难选项，就是对于hash表大小的选择。因为也许WMEs和tokens会变得很大，那么如果hash表很小，就会造成大量的hash冲突，这样的话，hash表的意义就会失去，无法提升效率。但如果hash表很大，那么会造成大量的内存浪费。我们可以动态管理哈希表的大小，但是这种方法再编码上造成了很大的复杂性。
+          
