@@ -166,4 +166,57 @@
         ## 总结来说，memory节点的设计，可以用hash索引加快匹配速度，最好使用链表形式表示token。
   17. Alpha Memory Implementation
       这里用伪代码实现memory节点，为了方便起见，使用了链表表示，且不含有索引。
-      
+      - 首先是WME结构，WME已经约定用三元组表示：
+        ```
+        structure WME:
+          fields:array[0..2]of symbol
+        end
+        ```
+      - Alpha memory 存储了WMEs的列表和它的后继节点（Join 节点）的列表：
+        ```
+        structure alpha-memory:
+          item:list of WME
+          successors:list of rete-node
+        end
+        ```
+      - 当一个WME通过了alpha网络的筛选进入了alpha memory，那么我们就简单的将它放入WME列表中，并通知后继节点列表中的所有节点。
+        ```
+        procedure alpha-memory-activation(node:alpha-memory,w:WME)
+          insert w at the head of node.items
+          for each child in node.successors do right-activation (child,w)
+        end
+  18. Beta Memory Implementation
+      - 按照前面约定的用list方式代表token：
+        ```
+        structure token:
+          parent:token{points to the higher token,for items 1...i-1}
+          wme:WME{gives item i}
+        end
+        ```
+      - beta memory node存储了它含有的tokens的列表和它的子节点列表。在给出beta memory节点结构之前，我们回忆到要确定beta节点到底是左激活还是右激活需要确定已经被激活的节点类型。所以我们必须可以去判断节点类型。我们可以用一种直接的方式，在结构中加入节点类型，这样根据节点内结构类型就可以知道这个节点的类型了。beta网络中的节点都是由下列形式表示：
+      ```
+      structure token:
+        type:"beta-memory","join-node",or"p-node"
+        children:list of rete-node
+        parent:rete-node
+        ...(variant part ----other data depending on node type)...
+      end
+      ```
+      - 所有beta网络内的节点都有类型，子节点列表，父节点这些部分。因此，我们可以快速写出左激活函数和右激活函数。
+      - 回到beta memory 节点。唯一额外内容就是beta memory存储的token。
+      ```
+      structure beta-memory:
+        items:list of token
+      end
+      ```
+      - 每当一个beta memory得到了一次新的匹配（由已存在的token和一些WMEs构成），我们都建立一个新的token，把他加入beta memory中，然后通知这个beta memory节点的子节点们：
+      ```
+      procedure beta-memory-left-activation(node: beta-memory,t: token,w: WME)
+        new-token=allocate-memory()
+        new-token.parent=t
+        new-token.wme=w
+        insert new-token at the head of node.items
+        for each child in node.children do left-activation(child,new-token)
+      end
+      ```
+
